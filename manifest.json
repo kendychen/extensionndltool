@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "NDL Tool - Mail Manager",
+  "version": "1.0.0",
+  "description": "Extension hỗ trợ NDL Tool: Tự động đăng nhập OAuth Microsoft, lấy token đọc mail, unlock tài khoản Identity qua proxy. Chạy trên trình duyệt người dùng — không tốn tài nguyên server.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://login.microsoftonline.com/*",
+    "https://login.live.com/*",
+    "https://account.live.com/*",
+    "https://outlook.live.com/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:*/*",
+      "https://ndltool.com/*",
+      "https://www.ndltool.com/*",
+      "https://*.railway.app/*",
+      "https://*.vercel.app/*"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://login.microsoftonline.com/*",
+        "https://login.live.com/*",
+        "https://account.live.com/*",
+        "https://outlook.live.com/mail/oauthRedirect.html*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
