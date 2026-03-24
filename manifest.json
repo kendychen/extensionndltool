@@ -1,5 +1,6 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs4KjhpF9+NOHlkmmWc01Yft2YZk5GceClAZ403LzG0YOcueNFWnUti9Qh5wOAC2VKR2R8a5Llri7/M3F01K2V9h1+t5z+biLENdVzEzzg4YcW36BcLzBlSQn3aKQTu5lrtrIrxbiBQgZQcXpsfausDJXDZhOk5Op9ntjYNir7XM1n4oMD2lJIKizhB63N6kL++UvRY4xqe+6T+HZS15iseVi0imzbmjezqYCwSx4qsMjUMskHWVjVCGYdQr6iZ1sMEejPF2R8uCpTPhDbCyrXCUoPO6JbLXkIMe0K0bd46ia3APkOqPAxy5raIQyrv7NIIEUC8k6+pXLQnoxH5FZOwIDAQAB",
   "name": "NDL Tool - Mail Manager",
   "version": "1.0.0",
   "description": "Extension hỗ trợ NDL Tool: Tự động đăng nhập OAuth Microsoft, lấy token đọc mail, unlock tài khoản Identity qua proxy. Chạy trên trình duyệt người dùng — không tốn tài nguyên server.",
