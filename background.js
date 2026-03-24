@@ -26,6 +26,16 @@ async function generatePKCE() {
 // Active tasks: tabId → { resolve, reject, email, password, codeChallenge }
 const activeTasks = new Map();
 
+// Đóng tab + window ẩn
+function closeTab(tabId) {
+  chrome.tabs.get(tabId, (tab) => {
+    if (chrome.runtime.lastError) return;
+    chrome.windows.remove(tab.windowId).catch(() => {
+      chrome.tabs.remove(tabId).catch(() => {});
+    });
+  });
+}
+
 // Listen for messages from web app
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   if (message.type === "PING") {
@@ -65,7 +75,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       getAnchorMailbox(tabId).then(anchorMailbox => {
         task.resolve({ success: true, code, anchorMailbox, codeVerifier: task.codeVerifier });
         activeTasks.delete(tabId);
-        chrome.tabs.remove(tabId).catch(() => {});
+        closeTab(tabId);
       });
       return;
     }
@@ -78,7 +88,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       url.includes("RecoverAccount?mkt")) {
     task.resolve({ success: false, identityBlocked: true, error: "Identity blocked" });
     activeTasks.delete(tabId);
-    chrome.tabs.remove(tabId).catch(() => {});
+    closeTab(tabId);
     return;
   }
 
@@ -86,7 +96,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (url.includes("proofs/Add") || url.includes("proofs/Manage")) {
     task.resolve({ success: false, error: "proofs/Add" });
     activeTasks.delete(tabId);
-    chrome.tabs.remove(tabId).catch(() => {});
+    closeTab(tabId);
     return;
   }
 });
@@ -130,7 +140,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       activeTasks.delete(sender.tab.id);
       if (!message.keepTab) {
-        chrome.tabs.remove(sender.tab.id).catch(() => {});
+        closeTab(sender.tab.id);
       }
     }
   }
@@ -142,19 +152,39 @@ async function handleOAuthRequest(message) {
 
   const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${CLIENT_ID}&scope=${encodeURIComponent(SCOPE)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_mode=fragment&response_type=code&x-client-SKU=msal.js.browser&x-client-VER=4.4.0&client_info=1&code_challenge=${codeChallenge}&code_challenge_method=S256&login_hint=${encodeURIComponent(email)}`;
 
-  // Open tab (hidden if possible)
-  const tab = await chrome.tabs.create({ url: authUrl, active: false });
+  // Tạo cửa sổ ẩn (minimized) để user không thấy
+  let tab;
+  try {
+    const win = await chrome.windows.create({
+      url: authUrl,
+      type: "popup",
+      width: 1,
+      height: 1,
+      left: -9999,
+      top: -9999,
+      focused: false,
+    });
+    tab = win.tabs[0];
+  } catch {
+    // Fallback: tạo tab ẩn nếu windows.create fail
+    tab = await chrome.tabs.create({ url: authUrl, active: false });
+  }
+
+  // Track window ID để đóng sau
+  const windowId = tab.windowId;
 
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       activeTasks.delete(tab.id);
-      chrome.tabs.remove(tab.id).catch(() => {});
+      chrome.windows.remove(windowId).catch(() => {});
       resolve({ success: false, error: "Timeout (60s)" });
     }, 60000);
 
     activeTasks.set(tab.id, {
       resolve: (result) => {
         clearTimeout(timeout);
+        // Đóng cửa sổ ẩn
+        chrome.windows.remove(windowId).catch(() => {});
         resolve(result);
       },
       email,
@@ -192,6 +222,6 @@ function cancelTask(taskId) {
   for (const [tabId, task] of activeTasks) {
     task.resolve({ success: false, error: "Cancelled" });
     activeTasks.delete(tabId);
-    chrome.tabs.remove(tabId).catch(() => {});
+    closeTab(tabId);
   }
 }
