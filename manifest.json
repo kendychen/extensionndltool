@@ -32,6 +32,16 @@
       "matches": [
         "https://login.microsoftonline.com/*",
         "https://login.live.com/*",
+        "https://account.live.com/*"
+      ],
+      "js": ["disable-passkey.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://login.microsoftonline.com/*",
+        "https://login.live.com/*",
         "https://account.live.com/*",
         "https://outlook.live.com/mail/oauthRedirect.html*"
       ],
